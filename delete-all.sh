@@ -30,7 +30,10 @@ for i in a b c; do
       | /usr/bin/parallel "gcloud compute disks delete --zone $zone --quiet {}" &
 done
 
+echo "--> Destroy Images"
 
+gcloud compute images list --no-standard-images --format 'value(name)'  \
+  | /usr/bin/parallel "gcloud compute images delete --quiet {}" &
 
 echo "--> Destroy target proxies"
 gcloud compute target-http-proxies list --format 'value(name)' \
@@ -81,7 +84,7 @@ gcloud compute addresses list --format 'value(name)' | \
   parallel 'gcloud compute addresses delete --quiet {}' &
 
 echo "--> Destroy routes"
-gcloud compute routes list --format 'value(name)' | \
+gcloud compute routes list --format 'value(name)' --filter 'name!=default' | \
   parallel 'gcloud compute routes delete --quiet {}' &
 
 waitfor
@@ -93,11 +96,11 @@ gcloud compute target-pools list --format 'value(name)' \
 waitfor
 
 echo "--> Destroy subnets"
-gcloud compute networks subnets list --format 'value(name)' \
+gcloud compute networks subnets list --format 'value(name)' --filter 'name!=default' \
   | parallel gcloud compute networks subnets delete --quiet {}
 
 echo "--> Destroy networks"
-gcloud compute networks list --format 'value(name)' \
+gcloud compute networks list --format 'value(name)' --filter 'name!=default' \
   | parallel gcloud compute networks delete --quiet {}
 
 echo "---------------------------------------"
